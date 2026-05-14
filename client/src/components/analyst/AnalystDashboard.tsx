@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/gameStore'
+import { useAudioStore } from '../../store/audioStore'
 import { useTranslation } from '../../i18n/useTranslation'
 import type { TranslationKey } from '../../i18n/translations'
 import Stamp from '../ui/Stamp'
 import PaperCard from '../ui/PaperCard'
 import Button from '../ui/Button'
-import AccusationScreen from '../shared/AccusationScreen'
 
 type Tab = 'evidence' | 'archive' | 'dossiers' | 'documents' | 'board'
 
@@ -15,11 +16,13 @@ export default function AnalystDashboard() {
   const examinedClues = useGameStore(s => s.examinedClues)
   const searchQuery = useGameStore(s => s.searchQuery)
   const connections = useGameStore(s => s.connections)
-  const flowState = useGameStore(s => s.flowState)
   const setSearchQuery = useGameStore(s => s.setSearchQuery)
   const addConnection = useGameStore(s => s.addConnection)
   const removeConnection = useGameStore(s => s.removeConnection)
   const setFlowState = useGameStore(s => s.setFlowState)
+
+  const playPageTurn = useAudioStore(s => s.playPageTurn)
+  const playKeys = useAudioStore(s => s.playKeys)
 
   const [tab, setTab] = useState<Tab>('evidence')
   const [selectedClueId, setSelectedClueId] = useState<string | null>(null)
@@ -90,7 +93,7 @@ export default function AnalystDashboard() {
         {tabs.map(tabKey => (
           <button
             key={tabKey}
-            onClick={() => setTab(tabKey)}
+            onClick={() => { setTab(tabKey); playPageTurn(); }}
             className="flex-shrink-0 px-3 md:px-4 py-2 stamped text-xs uppercase tracking-wider transition-all whitespace-nowrap min-h-[44px]"
             style={{
               color: tab === tabKey ? 'var(--paper2)' : 'var(--ink3)',
@@ -122,7 +125,7 @@ export default function AnalystDashboard() {
               <div className="flex gap-2 mb-3">
                 <input
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={e => { setSearchQuery(e.target.value); playKeys(); }}
                   className="flex-1 bg-transparent border-b outline-none mono text-xs pb-1"
                   style={{ borderColor: 'var(--ink4)', color: 'var(--paper2)' }}
                   placeholder={t('search_placeholder')}
@@ -371,20 +374,23 @@ export default function AnalystDashboard() {
                   {t('evidence_tab')}
                 </div>
                 <div className="space-y-2">
-                  {examinedClueList.map(clue => {
+                  {examinedClueList.map((clue, idx) => {
                     if (!clue) return null
                     return (
-                      <button
+                      <motion.button
                         key={clue.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
                         onClick={() => handleClueClick(clue.id)}
-                        className="paper px-3 py-1.5 mono text-xs cursor-pointer transition-all block text-left"
+                        className="paper px-3 py-1.5 mono text-xs clue-card transition-all block text-left"
                         style={{
                           filter: selectedClueId === clue.id ? 'brightness(1.3)' : undefined,
                           border: selectedClueId === clue.id ? '2px solid var(--red)' : '2px solid transparent',
                         }}
                       >
                         {locale === 'en' ? clue.name : clue.nameAr}
-                      </button>
+                      </motion.button>
                     )
                   })}
                 </div>
@@ -419,14 +425,17 @@ export default function AnalystDashboard() {
                     const clue = allClues.find(cl => cl.id === c.clueId)
                     const ch = allCharacters.find(cr => cr.id === c.characterId)
                     return (
-                      <button
+                      <motion.button
                         key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.08 }}
                         onClick={() => handleRemoveConnection(c.clueId, c.characterId)}
                         className="block mono text-xs cursor-pointer hover:opacity-60 transition-opacity"
                         style={{ color: 'var(--red)' }}
                       >
                         {clue ? (locale === 'en' ? clue.name : clue.nameAr) : c.clueId} → {ch ? (locale === 'en' ? ch.name : ch.nameAr) : c.characterId} ✕
-                      </button>
+                      </motion.button>
                     )
                   })}
                 </div>
@@ -436,7 +445,6 @@ export default function AnalystDashboard() {
         )}
       </div>
 
-      {flowState === 'ACCUSATION' && <AccusationScreen />}
     </div>
   )
 }

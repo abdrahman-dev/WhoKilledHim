@@ -28,6 +28,21 @@ function playTone(freq: number, duration: number, type: OscillatorType, volume: 
   osc.stop(ctx.currentTime + duration)
 }
 
+function playSweep(startFreq: number, endFreq: number, duration: number, type: OscillatorType, volume: number = 0.06) {
+  const ctx = getCtx()
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = type
+  osc.frequency.setValueAtTime(startFreq, ctx.currentTime)
+  osc.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + duration)
+  gain.gain.setValueAtTime(volume, ctx.currentTime)
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start()
+  osc.stop(ctx.currentTime + duration)
+}
+
 interface AudioState {
   isMuted: boolean
   toggleMute: () => void
@@ -38,6 +53,11 @@ interface AudioState {
   playStamp: () => void
   playSuccess: () => void
   playFail: () => void
+  playPageTurn: () => void
+  playDoorCreak: () => void
+  playKeys: () => void
+  playTick: () => void
+  playFireCrackle: () => void
   startAmbient: () => void
   stopAmbient: () => void
 }
@@ -155,6 +175,68 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     gain.connect(ctx.destination)
     osc.start()
     osc.stop(ctx.currentTime + 0.4)
+  },
+
+  playPageTurn: () => {
+    if (get().isMuted) return
+    const ctx = getCtx()
+    const bufSize = Math.floor(ctx.sampleRate * 0.06)
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufSize)
+    }
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 1800
+    filter.Q.value = 0.6
+    const gain = ctx.createGain()
+    gain.gain.value = 0.025
+    source.connect(filter)
+    filter.connect(gain)
+    gain.connect(ctx.destination)
+    source.start()
+  },
+
+  playDoorCreak: () => {
+    if (get().isMuted) return
+    playSweep(150, 80, 0.2, 'square', 0.04)
+  },
+
+  playKeys: () => {
+    if (get().isMuted) return
+    playTone(1400, 0.02, 'square', 0.03)
+  },
+
+  playTick: () => {
+    if (get().isMuted) return
+    playTone(1000, 0.03, 'sine', 0.02)
+  },
+
+  playFireCrackle: () => {
+    if (get().isMuted) return
+    const ctx = getCtx()
+    const bufSize = Math.floor(ctx.sampleRate * 0.7)
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufSize) * 0.6
+    }
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 500
+    filter.Q.value = 2
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.015, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7)
+    source.connect(filter)
+    filter.connect(gain)
+    gain.connect(ctx.destination)
+    source.start()
   },
 
   startAmbient: () => {

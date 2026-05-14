@@ -6,7 +6,6 @@ import { useTranslation } from '../../i18n/useTranslation'
 import Stamp from '../ui/Stamp'
 import PaperCard from '../ui/PaperCard'
 import Button from '../ui/Button'
-import AccusationScreen from '../shared/AccusationScreen'
 import type { Room } from '../../types/game'
 
 type View = 'map' | 'clues' | 'examine' | 'character'
@@ -18,7 +17,6 @@ export default function CrimeScene() {
   const examinedClues = useGameStore(s => s.examinedClues)
   const approachedCharacters = useGameStore(s => s.approachedCharacters)
   const notes = useGameStore(s => s.notes)
-  const flowState = useGameStore(s => s.flowState)
   const enterRoom = useGameStore(s => s.enterRoom)
   const examineClue = useGameStore(s => s.examineClue)
   const approachCharacter = useGameStore(s => s.approachCharacter)
@@ -26,6 +24,9 @@ export default function CrimeScene() {
   const setFlowState = useGameStore(s => s.setFlowState)
   const playStep = useAudioStore(s => s.playStep)
   const playDiscover = useAudioStore(s => s.playDiscover)
+  const playPageTurn = useAudioStore(s => s.playPageTurn)
+  const playDoorCreak = useAudioStore(s => s.playDoorCreak)
+  const playKeys = useAudioStore(s => s.playKeys)
 
   const [view, setView] = useState<View>('map')
   const [selectedClueId, setSelectedClueId] = useState<string | null>(null)
@@ -38,9 +39,10 @@ export default function CrimeScene() {
 
   const handleNoteChange = useCallback((val: string) => {
     setNoteDraft(val)
+    playKeys()
     if (noteTimer.current) clearTimeout(noteTimer.current)
     noteTimer.current = setTimeout(() => updateNotes(val), 300)
-  }, [updateNotes])
+  }, [updateNotes, playKeys])
 
   const allRooms = selectedCase?.rooms ?? []
   const currentRoom = allRooms.find(r => r.id === currentRoomId)
@@ -59,8 +61,9 @@ export default function CrimeScene() {
     const room = allRooms.find(r => r.id === roomId)
     if (!room || !isRoomAccessible(room)) return
     enterRoom(roomId)
-    setView('map')
+    handleViewChange('map')
     playStep()
+    playDoorCreak()
   }
 
   const handleExamineClue = (clueId: string) => {
@@ -68,6 +71,11 @@ export default function CrimeScene() {
     setSelectedClueId(clueId)
     setView('examine')
     playDiscover()
+  }
+
+  const handleViewChange = (newView: View) => {
+    setView(newView)
+    playPageTurn()
   }
 
   const handleApproach = (charId: string) => {
@@ -150,7 +158,7 @@ export default function CrimeScene() {
         )}
 
         <div>
-        <Button variant="paper" onClick={() => setView('clues')}>
+        <Button variant="paper" onClick={() => handleViewChange('clues')}>
           {t('examine_btn')} ({room.clues.length})
         </Button>
         </div>
@@ -164,7 +172,7 @@ export default function CrimeScene() {
 
     return (
       <div>
-        <Button variant="ghost" onClick={() => setView('map')} className="mb-3">
+        <Button variant="ghost" onClick={() => handleViewChange('map')} className="mb-3">
           {t('back_to_map')}
         </Button>
 
@@ -198,10 +206,10 @@ export default function CrimeScene() {
                     handleExamineClue(clue.id)
                   } else {
                     setSelectedClueId(clue.id)
-                    setView('examine')
+                    handleViewChange('examine')
                   }
                 }}
-                className={`w-full text-left paper p-3 transition-all ${examined ? 'opacity-80' : 'cursor-pointer hover:shadow-lg'}`}
+                className={`w-full text-left paper p-3 clue-card transition-all ${examined ? 'opacity-80' : 'cursor-examine'}`}
               >
                 <div className={`${locale === 'ar' ? 'arabic' : 'serif'} text-sm font-bold`} style={{ color: 'var(--ink)' }}>
                   {locale === 'en' ? clue.name : clue.nameAr}
@@ -232,7 +240,7 @@ export default function CrimeScene() {
 
     return (
       <div>
-        <Button variant="ghost" onClick={() => setView('clues')} className="mb-3">
+        <Button variant="ghost" onClick={() => handleViewChange('clues')} className="mb-3">
           {t('back_to_clues')}
         </Button>
 
@@ -303,7 +311,7 @@ export default function CrimeScene() {
 
     return (
       <div>
-        <Button variant="ghost" onClick={() => setView('map')} className="mb-3">
+        <Button variant="ghost" onClick={() => handleViewChange('map')} className="mb-3">
           {t('back_to_map')}
         </Button>
 
@@ -416,7 +424,6 @@ export default function CrimeScene() {
         {renderNotepad()}
       </div>
 
-      {flowState === 'ACCUSATION' && <AccusationScreen />}
     </div>
   )
 }

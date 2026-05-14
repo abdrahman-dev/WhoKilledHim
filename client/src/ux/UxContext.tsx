@@ -21,10 +21,18 @@ export default function UxContext() {
   const isMuted = useAudioStore(s => s.isMuted)
   const toggleMute = useAudioStore(s => s.toggleMute)
 
+  const playTick = useAudioStore(s => s.playTick)
+
   useEffect(() => {
     document.documentElement.dir = dir
     document.documentElement.lang = locale
   }, [dir, locale])
+
+  useEffect(() => {
+    if (timerActive && timerSeconds > 0 && timerSeconds <= 60) {
+      playTick()
+    }
+  }, [timerSeconds, timerActive, playTick])
 
   if (flowState === 'LANDING') return null
 

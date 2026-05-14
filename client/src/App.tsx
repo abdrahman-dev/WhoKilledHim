@@ -8,6 +8,7 @@ import CaseSelect from './components/shared/CaseSelect'
 import CrimeScene from './components/investigator/CrimeScene'
 import AnalystDashboard from './components/analyst/AnalystDashboard'
 import CaseBrief from './components/shared/CaseBrief'
+import AccusationScreen from './components/shared/AccusationScreen'
 import ResultScreen from './components/shared/ResultScreen'
 
 interface ErrorBoundaryProps {
@@ -93,14 +94,20 @@ function InteractionHandler() {
 
 function FlowRouter() {
   const flowState = useGameStore(s => s.flowState)
+  const role = useGameStore(s => s.role)
   const selectedCase = useGameStore(s => s.selectedCase)
   const setFlowState = useGameStore(s => s.setFlowState)
 
   useEffect(() => {
-    if ((flowState === 'INVESTIGATION' || flowState === 'ANALYSIS' || flowState === 'BRIEF') && !selectedCase) {
+    if ((flowState === 'INVESTIGATION' || flowState === 'ANALYSIS' || flowState === 'BRIEF' || flowState === 'ACCUSATION') && !selectedCase) {
       setFlowState('LANDING')
     }
   }, [flowState, selectedCase, setFlowState])
+
+  const showGame =
+    flowState === 'INVESTIGATION' ||
+    flowState === 'ANALYSIS' ||
+    flowState === 'ACCUSATION'
 
   const variants = {
     initial: { opacity: 0, y: 10 },
@@ -109,23 +116,25 @@ function FlowRouter() {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={flowState}
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        transition={{ duration: 0.25 }}
-      >
-        {flowState === 'LANDING' && <Landing />}
-        {flowState === 'CASE_SELECT' && <CaseSelect />}
-        {flowState === 'BRIEF' && <CaseBrief />}
-        {flowState === 'INVESTIGATION' && <CrimeScene />}
-        {flowState === 'ANALYSIS' && <AnalystDashboard />}
-        {flowState === 'RESULT' && <ResultScreen />}
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={flowState === 'ACCUSATION' ? `${role}_accuse` : flowState}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.25 }}
+        >
+          {flowState === 'LANDING' && <Landing />}
+          {flowState === 'CASE_SELECT' && <CaseSelect />}
+          {flowState === 'BRIEF' && <CaseBrief />}
+          {showGame && (role === 'investigator' ? <CrimeScene /> : <AnalystDashboard />)}
+          {flowState === 'RESULT' && <ResultScreen />}
+        </motion.div>
+      </AnimatePresence>
+      {flowState === 'ACCUSATION' && <AccusationScreen />}
+    </>
   )
 }
 

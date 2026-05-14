@@ -43,6 +43,7 @@ body {
   overflow-x: hidden;
 }
 
+/* ─── Typography ─── */
 .serif   { font-family: var(--font-serif); }
 .hand    { font-family: var(--font-hand); }
 .stamped { font-family: var(--font-stamp); }
@@ -53,23 +54,41 @@ body {
 [dir='rtl'] .hand    { font-family: var(--font-arabic); font-weight: 600; }
 [dir='rtl'] .stamped { font-family: var(--font-arabic); letter-spacing: 0; }
 
+/* ─── Paper surface ─── */
 .paper {
   background-color: var(--paper);
-  background-image: repeating-linear-gradient(
-    180deg, transparent, transparent 27px,
-    rgba(0,0,0,0.025) 27px, rgba(0,0,0,0.025) 28px
-  );
+  background-image:
+    repeating-linear-gradient(
+      180deg, transparent, transparent 27px,
+      rgba(0,0,0,0.025) 27px, rgba(0,0,0,0.025) 28px
+    );
   box-shadow: var(--shadow-md);
   position: relative;
+  border-radius: 1px;
 }
-.paper-dark { background-color: var(--paper3); }
+.paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 85%, rgba(120,100,60,0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 90% 10%, rgba(100,80,50,0.06) 0%, transparent 35%);
+  pointer-events: none;
+  border-radius: 1px;
+}
+.paper-dark {
+  background-color: var(--paper3);
+}
+.paper-dark::before { display: none; }
 .manila     { background-color: var(--manila); }
 
+/* ─── Tilt ─── */
 .tilt-1 { transform: rotate(-0.7deg); }
 .tilt-2 { transform: rotate(0.4deg);  }
 .tilt-3 { transform: rotate(-0.3deg); }
 .tilt-4 { transform: rotate(1.0deg);  }
 
+/* ─── Stamp ─── */
 .stamp {
   font-family: var(--font-stamp);
   font-size: 0.55rem;
@@ -83,6 +102,11 @@ body {
   display: inline-block;
   filter: blur(0.15px);
   white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.stamp:active {
+  transform: scale(0.92);
+  opacity: 0.9;
 }
 [dir='rtl'] .stamp {
   font-family: var(--font-arabic);
@@ -93,6 +117,18 @@ body {
 .stamp-blue  { color: var(--blue);  border-color: var(--blue);  }
 .stamp-green { color: var(--green); border-color: var(--green); }
 
+/* ─── Stamp press animation ─── */
+@keyframes stamp-press {
+  0%   { transform: scale(1.5); opacity: 0; }
+  50%  { transform: scale(0.85); opacity: 0.9; }
+  70%  { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 0.72; }
+}
+.stamp-animate {
+  animation: stamp-press 0.35s ease-out forwards;
+}
+
+/* ─── Evidence tag ─── */
 .etag {
   background: var(--gold);
   font-family: var(--font-mono);
@@ -105,6 +141,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  border-radius: 1px;
 }
 .etag::before {
   content: '';
@@ -114,6 +151,7 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Legal pad ─── */
 .legal-pad {
   background-color: #cec97e;
   background-image:
@@ -132,6 +170,7 @@ body {
     );
 }
 
+/* ─── Corkboard ─── */
 .corkboard {
   background-color: var(--cork);
   background-image:
@@ -139,6 +178,7 @@ body {
     radial-gradient(ellipse at 80% 70%, rgba(50,35,10,0.18) 0%, transparent 40%);
 }
 
+/* ─── Paperclip ─── */
 .clip {
   position: absolute;
   top: -7px; left: 16px;
@@ -158,6 +198,24 @@ body {
 }
 [dir='rtl'] .clip { left: auto; right: 16px; }
 
+/* ─── Folder tab ─── */
+.folder-tab {
+  display: inline-block;
+  padding: 4px 14px 2px;
+  background: var(--manila);
+  color: var(--paper2);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--ink3);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  position: relative;
+  top: -1px;
+}
+
+/* ─── Animations ─── */
 @keyframes blink { 50% { border-color: transparent; } }
 .blink-cursor {
   border-right: 2px solid var(--ink);
@@ -170,6 +228,70 @@ body {
 }
 .pulse { animation: pulse-ring 2.2s ease-in-out infinite; }
 
+@keyframes gas-flicker {
+  0%, 100% { opacity: 0.07; }
+  25%      { opacity: 0.12; }
+  45%      { opacity: 0.06; }
+  65%      { opacity: 0.10; }
+  85%      { opacity: 0.08; }
+}
+.gas-flicker { animation: gas-flicker 3s ease-in-out infinite; }
+
+@keyframes ink-spot {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 0.12; }
+}
+.ink-spot {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, var(--ink), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+}
+.ink-spot:nth-child(1) { top: 10%; right: 8%; width: 30px; height: 30px; animation: ink-spot 5s ease-out 2s forwards; }
+.ink-spot:nth-child(2) { bottom: 15%; left: 5%; width: 20px; height: 20px; animation: ink-spot 6s ease-out 4s forwards; }
+.ink-spot:nth-child(3) { top: 40%; left: 60%; width: 15px; height: 15px; animation: ink-spot 4s ease-out 1s forwards; }
+
+/* ─── Drawer pull tab ─── */
+.drawer-tab {
+  position: absolute;
+  top: 50%;
+  right: -18px;
+  width: 18px;
+  height: 30px;
+  background: var(--paper2);
+  border: 1px solid var(--ink3);
+  border-left: none;
+  border-radius: 0 3px 3px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  color: var(--ink3);
+  transform: translateY(-50%);
+}
+
+/* ─── Hover effects ─── */
+.clue-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.clue-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+.clue-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* ─── Cursor for magnifying glass ─── */
+.cursor-examine {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23c4c0ac' stroke-width='2'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cline x1='15' y1='15' x2='21' y2='21'/%3E%3C/svg%3E") 12 12, zoom-in;
+}
+
+/* ─── Ambient overlay with flicker ─── */
 #root::before {
   content: '';
   position: fixed;
@@ -177,8 +299,16 @@ body {
   background: radial-gradient(ellipse at 50% 0%, rgba(25,40,20,0.07) 0%, transparent 65%);
   pointer-events: none;
   z-index: 9999;
+  animation: gas-flicker 4s ease-in-out infinite;
 }
 
-::-webkit-scrollbar       { width: 6px; }
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar       { width: 7px; }
 ::-webkit-scrollbar-track { background: var(--desk); }
-::-webkit-scrollbar-thumb { background: var(--ink3); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--gold), var(--ink3)); border-radius: 3px; }
+
+/* ─── Print ─── */
+@media print {
+  body > *:not(#print-report) { display: none !important; }
+  #print-report { display: block !important; }
+}
