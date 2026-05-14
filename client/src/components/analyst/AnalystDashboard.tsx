@@ -142,12 +142,52 @@ export default function AnalystDashboard() {
                     <pre className="mono text-xs mt-1 whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--ink2)', fontSize: '0.6rem' }}>
                       {locale === 'en' ? entry.content : entry.contentAr}
                     </pre>
+                    {entry.suggestedQuestions && entry.suggestedQuestions.length > 0 && (
+                      <div className="mt-2 pt-2" style={{ borderTop: '1px dashed var(--ink4)' }}>
+                        <div className="stamped text-xs mb-1" style={{ color: 'var(--green)' }}>
+                          {t('suggested_questions')}
+                        </div>
+                        <div className="space-y-1">
+                          {(locale === 'en' ? entry.suggestedQuestions : entry.suggestedQuestionsAr ?? entry.suggestedQuestions).map((q, qi) => (
+                            <p key={qi} className="hand text-xs" style={{ color: 'var(--ink3)' }}>
+                              • {q}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </PaperCard>
                 ))}
               </div>
             </div>
 
             <div className="flex-1">
+              <div className="paper-dark p-2 mb-3" style={{ borderRadius: 4 }}>
+                <div className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
+                  SCENE OVERVIEW
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {allRooms.map(r => {
+                    const examinedInRoom = r.clues.some(c => examinedClues.includes(c.id))
+                    const totalInRoom = r.clues.length
+                    const examinedCountInRoom = r.clues.filter(c => examinedClues.includes(c.id)).length
+                    return (
+                      <div
+                        key={r.id}
+                        className="px-2 py-0.5 mono text-xs"
+                        style={{
+                          background: examinedInRoom ? 'var(--gold)' : 'var(--ink3)',
+                          color: examinedInRoom ? 'var(--ink)' : 'var(--paper3)',
+                          borderRadius: 2,
+                        }}
+                      >
+                        {locale === 'en' ? r.name : r.nameAr} ({examinedCountInRoom}/{totalInRoom})
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="stamped text-xs mb-2" style={{ color: 'var(--ink3)' }}>
                 {t('examined_count')}
               </div>
@@ -203,9 +243,25 @@ export default function AnalystDashboard() {
                   <summary className="p-3 cursor-pointer stamped text-xs" style={{ color: 'var(--ink)' }}>
                     {locale === 'en' ? entry.title : entry.titleAr}
                   </summary>
-                  <pre className="p-3 pt-0 mono text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--ink2)', fontSize: '0.6rem' }}>
-                    {locale === 'en' ? entry.content : entry.contentAr}
-                  </pre>
+                  <div className="p-3 pt-0">
+                    <pre className="mono text-xs whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--ink2)', fontSize: '0.6rem' }}>
+                      {locale === 'en' ? entry.content : entry.contentAr}
+                    </pre>
+                    {entry.suggestedQuestions && entry.suggestedQuestions.length > 0 && (
+                      <div className="mt-2 pt-2" style={{ borderTop: '1px dashed var(--ink4)' }}>
+                        <div className="stamped text-xs mb-1" style={{ color: 'var(--green)' }}>
+                          {t('suggested_questions')}
+                        </div>
+                        <div className="space-y-1">
+                          {(locale === 'en' ? entry.suggestedQuestions : entry.suggestedQuestionsAr ?? entry.suggestedQuestions).map((q, qi) => (
+                            <p key={qi} className="hand text-xs" style={{ color: 'var(--ink3)' }}>
+                              • {q}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </details>
               ))}
             </div>

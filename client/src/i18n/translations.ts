@@ -83,6 +83,21 @@ export const translations = {
     error_title: 'FILE CORRUPTED',
     error_body: 'An error occurred in the case files.',
     error_restart: 'CLEAR & RESTART',
+
+    case_brief: 'CASE BRIEF',
+    brief_start: 'BEGIN INVESTIGATION',
+    brief_skip: 'SKIP',
+    read_full: 'Read full observation',
+    show_digest: 'Show summary',
+    digest_label: 'QUICK OBSERVATION:',
+    suggested_questions: 'ASK YOUR PARTNER:',
+    question_copy: 'Ask this',
+    lying_warning: 'This person may not be telling the truth.',
+    deliberation_header: 'DELIBERATION',
+    deliberation_desc: 'Review your findings with your partner before signing the warrant.',
+    timeline_label: 'CASE TIMELINE',
+    missed_evidence: 'EVIDENCE NOT EXAMINED',
+    connections_made: 'CONNECTIONS MADE',
   },
 
   ar: {
@@ -169,6 +184,21 @@ export const translations = {
     error_title: 'الملف تالف',
     error_body: 'حدث خطأ في ملفات القضية.',
     error_restart: 'مسح وإعادة تشغيل',
+
+    case_brief: 'ملخص القضية',
+    brief_start: 'ابدأ التحقيق',
+    brief_skip: 'تخطي',
+    read_full: 'اقرأ الوصف الكامل',
+    show_digest: 'عرض الملخص',
+    digest_label: 'ملاحظة سريعة:',
+    suggested_questions: 'اسأل شريكك:',
+    question_copy: 'اسأل هذا',
+    lying_warning: 'هذا الشخص قد لا يقول الحقيقة.',
+    deliberation_header: 'مداولة',
+    deliberation_desc: 'راجع النتائج مع شريكك قبل توقيع المذكرة.',
+    timeline_label: 'الخط الزمني',
+    missed_evidence: 'أدلة لم تفحص',
+    connections_made: 'الروابط المنشأة',
   },
 } as const
 

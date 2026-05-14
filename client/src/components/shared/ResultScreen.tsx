@@ -9,6 +9,7 @@ export default function ResultScreen() {
   const isCorrect = useGameStore(s => s.isCorrect)
   const selectedCase = useGameStore(s => s.selectedCase)
   const accusedCharacterId = useGameStore(s => s.accusedCharacterId)
+  const examinedClues = useGameStore(s => s.examinedClues)
   const connections = useGameStore(s => s.connections)
   const setFlowState = useGameStore(s => s.setFlowState)
   const playSuccess = useAudioStore(s => s.playSuccess)
@@ -26,6 +27,11 @@ export default function ResultScreen() {
 
   const killer = selectedCase?.characters.find(c => c.id === selectedCase?.killerId)
   const accused = selectedCase?.characters.find(c => c.id === accusedCharacterId)
+  const allClues = selectedCase?.rooms.flatMap(r => r.clues) ?? []
+  const allRooms = selectedCase?.rooms ?? []
+  const timeline = selectedCase?.timeline ?? []
+
+  const unexaminedClues = allClues.filter(c => !examinedClues.includes(c.id))
 
   return (
     <motion.div
@@ -88,13 +94,33 @@ export default function ResultScreen() {
           </p>
         </div>
 
+        {timeline.length > 0 && (
+          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4 }}>
+            <p className="stamped text-xs mb-2" style={{ color: 'var(--ink3)' }}>
+              {t('timeline_label')}
+            </p>
+            <div className="space-y-2">
+              {timeline.map(ev => (
+                <div key={ev.id} className="flex gap-2 text-xs" style={{ flexDirection: locale === 'ar' ? 'row-reverse' : 'row' }}>
+                  <span className="stamped flex-shrink-0" style={{ color: 'var(--blue)', minWidth: 70 }}>
+                    {locale === 'en' ? ev.time : ev.timeAr}
+                  </span>
+                  <span className="serif" style={{ color: 'var(--ink)' }}>
+                    {locale === 'en' ? ev.description : ev.descriptionAr}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {connections.length > 0 && (
-          <div className="paper-dark p-3 mb-5" style={{ borderRadius: 4 }}>
+          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4 }}>
             <p className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
-              CONNECTIONS
+              {t('connections_made')} ({connections.length})
             </p>
             {connections.map((c, idx) => {
-              const item = selectedCase?.rooms.flatMap(r => r.clues).find(cl => cl.id === c.clueId)
+              const item = allClues.find(cl => cl.id === c.clueId)
               const ch = selectedCase?.characters.find(ch => ch.id === c.characterId)
               return (
                 <div key={idx} className="mono text-xs" style={{ color: 'var(--ink)' }}>
@@ -102,6 +128,22 @@ export default function ResultScreen() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {unexaminedClues.length > 0 && (
+          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4, opacity: 0.7 }}>
+            <p className="stamped text-xs mb-1" style={{ color: 'var(--red)' }}>
+              {t('missed_evidence')} ({unexaminedClues.length})
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {unexaminedClues.map(cl => (
+                <span key={cl.id} className="mono text-xs" style={{ color: 'var(--ink3)' }}>
+                  {locale === 'en' ? cl.name : cl.nameAr}{' '}
+                  <span style={{ color: 'var(--ink4)' }}>({allRooms.find(r => r.clues.some(c => c.id === cl.id)) ? locale === 'en' ? allRooms.find(r => r.clues.some(c => c.id === cl.id))!.name : allRooms.find(r => r.clues.some(c => c.id === cl.id))!.nameAr : ''})</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

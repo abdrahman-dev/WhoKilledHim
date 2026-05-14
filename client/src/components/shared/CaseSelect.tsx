@@ -11,7 +11,6 @@ import type { Case } from '../../types/game'
 
 export default function CaseSelect() {
   const { t, locale, dir } = useTranslation()
-  const role = useGameStore(s => s.role)
   const setFlowState = useGameStore(s => s.setFlowState)
   const selectCase = useGameStore(s => s.selectCase)
   const playStamp = useAudioStore(s => s.playStamp)
@@ -20,11 +19,6 @@ export default function CaseSelect() {
   const handleOpen = (c: Case) => {
     selectCase(c)
     playStamp()
-    if (role === 'investigator') {
-      setFlowState('INVESTIGATION')
-    } else {
-      setFlowState('ANALYSIS')
-    }
   }
 
   const difficultyBadge = (c: Case) => {

@@ -28,11 +28,8 @@ export default function UxContext() {
 
   if (flowState === 'LANDING') return null
 
-  const allClues = selectedCase?.rooms.flatMap(r => r.clues) ?? []
-  const totalClues = allClues.filter(c => c.isSignificant).length
-  const examinedCount = examinedClues.filter(id =>
-    allClues.some(c => c.id === id && c.isSignificant)
-  ).length
+  const totalClues = selectedCase?.rooms.reduce((s, r) => s + r.clues.length, 0) ?? 0
+  const examinedCount = examinedClues.length
   const connectionsCount = connections.length
 
   const minutes = Math.floor(timerSeconds / 60)

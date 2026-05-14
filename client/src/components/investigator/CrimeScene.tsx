@@ -32,6 +32,7 @@ export default function CrimeScene() {
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null)
   const [noteDraft, setNoteDraft] = useState(notes)
   const [showNotepad, setShowNotepad] = useState(false)
+  const [showFullObservation, setShowFullObservation] = useState(false)
 
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -192,17 +193,23 @@ export default function CrimeScene() {
             return (
               <button
                 key={clue.id}
-                onClick={() => !examined && handleExamineClue(clue.id)}
-                className={`w-full text-left paper p-3 transition-all ${examined ? 'opacity-70' : 'cursor-pointer hover:shadow-lg'}`}
-                disabled={examined}
+                onClick={() => {
+                  if (!examined) {
+                    handleExamineClue(clue.id)
+                  } else {
+                    setSelectedClueId(clue.id)
+                    setView('examine')
+                  }
+                }}
+                className={`w-full text-left paper p-3 transition-all ${examined ? 'opacity-80' : 'cursor-pointer hover:shadow-lg'}`}
               >
                 <div className={`${locale === 'ar' ? 'arabic' : 'serif'} text-sm font-bold`} style={{ color: 'var(--ink)' }}>
                   {locale === 'en' ? clue.name : clue.nameAr}
                 </div>
                 {examined && (
-                  <span className="stamp stamp-green mt-1" style={{ background: 'transparent', fontSize: '0.5rem' }}>
-                    ✓
-                  </span>
+                  <p className="hand text-xs mt-1 leading-snug" style={{ color: 'var(--ink3)' }}>
+                    {locale === 'en' ? clue.digest : clue.digestAr}
+                  </p>
                 )}
               </button>
             )
@@ -219,7 +226,9 @@ export default function CrimeScene() {
     const clue = room.clues.find(c => c.id === selectedClueId) ?? allClues.find(c => c.id === selectedClueId)
     if (!clue) return null
 
-    const roomName = allRooms.find(r => r.clues.some(c => c.id === clue.id))?.name ?? room.name
+    const clueRoom = allRooms.find(r => r.clues.some(c => c.id === clue.id))
+    const roomName = clueRoom?.name ?? room.name
+    const roomNameAr = clueRoom?.nameAr ?? room.nameAr
 
     return (
       <div>
@@ -232,17 +241,43 @@ export default function CrimeScene() {
             {locale === 'en' ? clue.name : clue.nameAr}
           </h3>
           <div className="stamped text-xs mb-3" style={{ color: 'var(--ink3)' }}>
-            {t('current_room')} {locale === 'en' ? roomName : (allRooms.find(r => r.clues.some(c => c.id === clue.id))?.nameAr ?? room.nameAr)}
+            {t('current_room')} {locale === 'en' ? roomName : roomNameAr}
+          </div>
+
+          <div
+            className="p-3 mb-3 hand text-sm"
+            style={{
+              background: 'rgba(200,190,140,0.4)',
+              transform: 'rotate(-1deg)',
+              borderRadius: 2,
+            }}
+          >
+            <div className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
+              {t('digest_label')}
+            </div>
+            {locale === 'en' ? clue.digest : clue.digestAr}
           </div>
 
           <hr className="mb-3 opacity-30" style={{ borderColor: 'var(--ink3)' }} />
 
-          <div className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
-            {t('observation_label')}
-          </div>
-          <p className={`${locale === 'ar' ? 'arabic' : 'serif'} text-sm leading-relaxed`} style={{ color: 'var(--ink)' }}>
-            {locale === 'en' ? clue.observation : clue.observationAr}
-          </p>
+          <button
+            onClick={() => setShowFullObservation(!showFullObservation)}
+            className="stamp stamp-blue cursor-pointer hover:opacity-100 transition-opacity mb-3"
+            style={{ background: 'transparent' }}
+          >
+            {showFullObservation ? t('show_digest') : t('read_full')}
+          </button>
+
+          {showFullObservation && (
+            <div>
+              <div className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
+                {t('observation_label')}
+              </div>
+              <p className={`${locale === 'ar' ? 'arabic' : 'serif'} text-sm leading-relaxed`} style={{ color: 'var(--ink)' }}>
+                {locale === 'en' ? clue.observation : clue.observationAr}
+              </p>
+            </div>
+          )}
 
           <div
             className="p-3 mt-4 hand text-sm"
@@ -300,6 +335,11 @@ export default function CrimeScene() {
           <p className="hand text-sm italic leading-relaxed" style={{ color: 'var(--ink2)' }}>
             "{locale === 'en' ? ch.statement : ch.statementAr}"
           </p>
+          {ch.isLying && (
+            <div className="mt-3 p-2 stamp stamp-red" style={{ background: 'transparent', fontSize: '0.55rem' }}>
+              {t('lying_warning')}
+            </div>
+          )}
         </PaperCard>
       </div>
     )

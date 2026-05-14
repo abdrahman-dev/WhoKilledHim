@@ -7,6 +7,7 @@ import Landing from './components/landing/Landing'
 import CaseSelect from './components/shared/CaseSelect'
 import CrimeScene from './components/investigator/CrimeScene'
 import AnalystDashboard from './components/analyst/AnalystDashboard'
+import CaseBrief from './components/shared/CaseBrief'
 import ResultScreen from './components/shared/ResultScreen'
 
 interface ErrorBoundaryProps {
@@ -96,7 +97,7 @@ function FlowRouter() {
   const setFlowState = useGameStore(s => s.setFlowState)
 
   useEffect(() => {
-    if ((flowState === 'INVESTIGATION' || flowState === 'ANALYSIS') && !selectedCase) {
+    if ((flowState === 'INVESTIGATION' || flowState === 'ANALYSIS' || flowState === 'BRIEF') && !selectedCase) {
       setFlowState('LANDING')
     }
   }, [flowState, selectedCase, setFlowState])
@@ -119,6 +120,7 @@ function FlowRouter() {
       >
         {flowState === 'LANDING' && <Landing />}
         {flowState === 'CASE_SELECT' && <CaseSelect />}
+        {flowState === 'BRIEF' && <CaseBrief />}
         {flowState === 'INVESTIGATION' && <CrimeScene />}
         {flowState === 'ANALYSIS' && <AnalystDashboard />}
         {flowState === 'RESULT' && <ResultScreen />}

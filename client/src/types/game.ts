@@ -3,6 +3,7 @@ export type Difficulty = 'easy' | 'medium' | 'hard'
 export type FlowState =
   | 'LANDING'
   | 'CASE_SELECT'
+  | 'BRIEF'
   | 'INVESTIGATION'
   | 'ANALYSIS'
   | 'ACCUSATION'
@@ -12,9 +13,10 @@ export interface Clue {
   id: string
   name: string
   nameAr: string
+  digest: string
+  digestAr: string
   observation: string
   observationAr: string
-  isSignificant: boolean
   revealsAfter?: string
 }
 
@@ -28,6 +30,9 @@ export interface Character {
   sceneObservationAr: string
   statement: string
   statementAr: string
+  isLying?: boolean
+  trueStatement?: string
+  trueStatementAr?: string
   psychProfile: string
   psychProfileAr: string
   secretBackground: string
@@ -59,6 +64,8 @@ export interface ArchiveEntry {
   tags: string[]
   content: string
   contentAr: string
+  suggestedQuestions?: string[]
+  suggestedQuestionsAr?: string[]
   isRedHerring?: boolean
 }
 
@@ -77,12 +84,22 @@ export interface Connection {
   characterId: string
 }
 
+export interface CaseTimelineEvent {
+  id: string
+  time: string
+  timeAr: string
+  description: string
+  descriptionAr: string
+}
+
 export interface Case {
   id: string
   title: string
   titleAr: string
   subtitle: string
   subtitleAr: string
+  brief: string
+  briefAr: string
   setting: string
   settingAr: string
   difficulty: Difficulty
@@ -94,6 +111,7 @@ export interface Case {
   characters: Character[]
   archive: ArchiveEntry[]
   documents: Document[]
+  timeline: CaseTimelineEvent[]
   solution: string
   solutionAr: string
 }
@@ -113,6 +131,7 @@ export interface GameState {
   accusedCharacterId: string | null
   accusationReasoning: string
   isCorrect: boolean | null
+  briefViewed: boolean
   timerSeconds: number
   timerActive: boolean
   timerExpired: boolean

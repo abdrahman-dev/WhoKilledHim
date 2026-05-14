@@ -19,18 +19,19 @@ const defaultState: GameState = {
   accusedCharacterId: null,
   accusationReasoning: '',
   isCorrect: null,
+  briefViewed: false,
   timerSeconds: 1800,
   timerActive: false,
   timerExpired: false,
 }
 
-const validFlowStates: FlowState[] = ['LANDING', 'CASE_SELECT', 'INVESTIGATION', 'ANALYSIS', 'ACCUSATION', 'RESULT']
+const validFlowStates: FlowState[] = ['LANDING', 'CASE_SELECT', 'BRIEF', 'INVESTIGATION', 'ANALYSIS', 'ACCUSATION', 'RESULT']
 
 function validateSavedState(data: Record<string, unknown>): GameState | null {
   if (typeof data !== 'object' || data === null) return null
   if (!('flowState' in data) || !validFlowStates.includes(data.flowState as FlowState)) return null
   const flowState = data.flowState as FlowState
-  if (['INVESTIGATION', 'ANALYSIS', 'ACCUSATION'].includes(flowState)) {
+  if (['INVESTIGATION', 'ANALYSIS', 'ACCUSATION', 'BRIEF'].includes(flowState)) {
     const c = data.selectedCase as Record<string, unknown> | null
     if (!c || !Array.isArray(c.rooms) || c.rooms.length === 0) return null
   }
@@ -129,9 +130,11 @@ export const useGameStore = create<GameState & GameActions>()((set, get) => ({
       accusedCharacterId: null,
       accusationReasoning: '',
       isCorrect: null,
+      briefViewed: false,
       timerSeconds: 1800,
       timerActive: false,
       timerExpired: false,
+      flowState: 'BRIEF' as FlowState,
     }
     set(s)
     persistState(s)
