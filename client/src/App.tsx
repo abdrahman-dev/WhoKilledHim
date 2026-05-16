@@ -1,160 +1,97 @@
-import { Component, type ReactNode, useEffect, useRef } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useGameStore } from './store/gameStore'
-import { useAudioStore } from './store/audioStore'
-import UxContext from './ux/UxContext'
-import Landing from './components/landing/Landing'
-import CaseSelect from './components/shared/CaseSelect'
-import CrimeScene from './components/investigator/CrimeScene'
-import AnalystDashboard from './components/analyst/AnalystDashboard'
-import CaseBrief from './components/shared/CaseBrief'
-import AccusationScreen from './components/shared/AccusationScreen'
-import ResultScreen from './components/shared/ResultScreen'
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import './i18n';
+import { useGameStore } from './store/game.store';
+import { trainingCase } from './cases/training-case';
+import type { Case } from './types/case.types';
+import CasesPage from './pages/CasesPage';
+import RoleSelectPage from './pages/RoleSelectPage';
+import InvestigatorPage from './pages/InvestigatorPage';
+import AnalystPage from './pages/AnalystPage';
+import AccusationForm from './components/investigator/AccusationForm';
+import ResultScreen from './components/shared/ResultScreen';
 
-interface ErrorBoundaryProps {
-  children: ReactNode
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--desk)' }}>
-          <div className="paper p-6 max-w-md w-full text-center">
-            <h2 className="stamped text-lg mb-4" style={{ color: 'var(--red)' }}>
-              FILE CORRUPTED
-            </h2>
-            <p className="serif text-sm mb-6" style={{ color: 'var(--ink)' }}>
-              An error occurred in the case files.
-            </p>
-            <button
-              onClick={() => {
-                localStorage.removeItem('mq2_state')
-                window.location.reload()
-              }}
-              className="stamp stamp-red cursor-pointer hover:opacity-100 transition-opacity"
-              style={{ background: 'transparent' }}
-            >
-              CLEAR & RESTART
-            </button>
-          </div>
-        </div>
-      )
-    }
-    return this.props.children
-  }
-}
-
-function TimerManager() {
-  const timerActive = useGameStore(s => s.timerActive)
-  const tickTimer = useGameStore(s => s.tickTimer)
-
-  useEffect(() => {
-    if (!timerActive) return
-    const interval = setInterval(() => tickTimer(), 1000)
-    return () => clearInterval(interval)
-  }, [timerActive, tickTimer])
-
-  return null
-}
-
-function InteractionHandler() {
-  const startedRef = useRef(false)
-  const startAmbient = useAudioStore(s => s.startAmbient)
-
-  useEffect(() => {
-    const handler = () => {
-      if (startedRef.current) return
-      startedRef.current = true
-      startAmbient()
-    }
-    document.addEventListener('mousedown', handler, { once: true })
-    document.addEventListener('keydown', handler, { once: true })
-    return () => {
-      document.removeEventListener('mousedown', handler)
-      document.removeEventListener('keydown', handler)
-    }
-  }, [startAmbient])
-
-  return null
-}
-
-function FlowRouter() {
-  const flowState = useGameStore(s => s.flowState)
-  const role = useGameStore(s => s.role)
-  const selectedCase = useGameStore(s => s.selectedCase)
-  const setFlowState = useGameStore(s => s.setFlowState)
-
-  useEffect(() => {
-    if ((flowState === 'INVESTIGATION' || flowState === 'ANALYSIS' || flowState === 'BRIEF' || flowState === 'ACCUSATION') && !selectedCase) {
-      setFlowState('LANDING')
-    }
-  }, [flowState, selectedCase, setFlowState])
-
-  const showGame =
-    flowState === 'INVESTIGATION' ||
-    flowState === 'ANALYSIS' ||
-    flowState === 'ACCUSATION'
-
-  const variants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 },
-  }
-
-  return (
-    <>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={flowState === 'ACCUSATION' ? `${role}_accuse` : flowState}
-          variants={variants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={{ duration: 0.25 }}
-        >
-          {flowState === 'LANDING' && <Landing />}
-          {flowState === 'CASE_SELECT' && <CaseSelect />}
-          {flowState === 'BRIEF' && <CaseBrief />}
-          {showGame && (role === 'investigator' ? <CrimeScene /> : <AnalystDashboard />)}
-          {flowState === 'RESULT' && <ResultScreen />}
-        </motion.div>
-      </AnimatePresence>
-      {flowState === 'ACCUSATION' && <AccusationScreen />}
-    </>
-  )
-}
+const availableCases: Case[] = [trainingCase];
 
 export default function App() {
-  const locale = useGameStore(s => s.locale)
-  const dir = locale === 'ar' ? 'rtl' : 'ltr'
+  const { i18n } = useTranslation();
+  const phase = useGameStore((s) => s.phase);
+  const role = useGameStore((s) => s.role);
+  const caseData = useGameStore((s) => s.caseData);
+  const result = useGameStore((s) => s.result);
+  const reset = useGameStore((s) => s.reset);
+
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [view, setView] = useState<'cases' | 'role-select'>('cases');
+  const isArabic = i18n.language === 'ar';
 
   useEffect(() => {
-    document.documentElement.dir = dir
-    document.documentElement.lang = locale
-  }, [dir, locale])
+    document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
+    document.documentElement.lang = isArabic ? 'ar' : 'en';
+    document.body.style.direction = isArabic ? 'rtl' : 'ltr';
+    document.body.style.textAlign = isArabic ? 'right' : 'left';
+  }, [isArabic]);
 
-  return (
-    <ErrorBoundary>
-      <TimerManager />
-      <InteractionHandler />
-      <div className="min-h-screen" style={{ background: 'var(--desk)' }}>
-        <UxContext />
-        <FlowRouter />
-      </div>
-    </ErrorBoundary>
-  )
+  const handleSelectCase = (caseId: string) => {
+    const c = availableCases.find((c) => c.id === caseId);
+    if (c) {
+      setSelectedCase(c);
+      setView('role-select');
+    }
+  };
+
+  const handleBackToCases = () => {
+    setView('cases');
+    setSelectedCase(null);
+  };
+
+  const handleExit = () => {
+    reset();
+    setSelectedCase(null);
+    setView('cases');
+  };
+
+  if (phase === 'result') {
+    return <ResultScreen result={result!} onNewGame={handleExit} />;
+  }
+
+  if (phase === 'accusation' && caseData) {
+    const suspects = caseData.characters.filter((ch) => ch.role === 'suspect');
+    return (
+      <AccusationForm
+        suspects={suspects}
+        onSubmit={(acc) => useGameStore.getState().accuse(acc)}
+        onBack={() => useGameStore.getState().setLocation(caseData.locations[0].id)}
+      />
+    );
+  }
+
+  if (phase === 'playing' && role === 'investigator') {
+    return <InvestigatorPage onExit={handleExit} />;
+  }
+
+  if (phase === 'playing' && role === 'analyst') {
+    return <AnalystPage onExit={handleExit} />;
+  }
+
+  if (phase === 'role-select' || view === 'role-select') {
+    if (!selectedCase && caseData) {
+      return (
+        <RoleSelectPage
+          selectedCase={caseData as Case}
+          onBack={handleBackToCases}
+        />
+      );
+    }
+    if (selectedCase) {
+      return (
+        <RoleSelectPage
+          selectedCase={selectedCase}
+          onBack={handleBackToCases}
+        />
+      );
+    }
+  }
+
+  return <CasesPage onSelectCase={handleSelectCase} />;
 }

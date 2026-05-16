@@ -1,169 +1,110 @@
-import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { useGameStore } from '../../store/gameStore'
-import { useAudioStore } from '../../store/audioStore'
-import { useTranslation } from '../../i18n/useTranslation'
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { GameResult } from '../../types/case.types';
+import { useSounds } from '../../sounds/useSounds';
 
-export default function ResultScreen() {
-  const { t, locale, dir } = useTranslation()
-  const isCorrect = useGameStore(s => s.isCorrect)
-  const selectedCase = useGameStore(s => s.selectedCase)
-  const accusedCharacterId = useGameStore(s => s.accusedCharacterId)
-  const examinedClues = useGameStore(s => s.examinedClues)
-  const connections = useGameStore(s => s.connections)
-  const setFlowState = useGameStore(s => s.setFlowState)
-  const playSuccess = useAudioStore(s => s.playSuccess)
-  const playFail = useAudioStore(s => s.playFail)
-  const stopAmbient = useAudioStore(s => s.stopAmbient)
+interface ResultScreenProps {
+  result: GameResult;
+  onNewGame: () => void;
+}
 
-  const hasPlayed = useRef(false)
+function formatTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (minutes > 0) return `${minutes}m ${secs}s`;
+  return `${secs}s`;
+}
+
+function generatePdf(result: GameResult, title: string) {
+  import('jspdf').then(({ default: jsPDF }) => {
+    const doc = new jsPDF();
+    const { correct, accusation, solution } = result;
+    doc.setFontSize(16);
+    doc.text('Official Case Report', 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Case: ${title}`, 105, 30, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text(`Suspect: ${accusation.suspectId}`, 20, 45);
+    doc.text(`Evidence: ${accusation.evidenceSummary}`, 20, 55);
+    doc.text(`Result: ${correct ? 'CORRECT' : 'WRONG'}`, 20, 70);
+    doc.text('Timeline:', 20, 85);
+    doc.text(solution.timeline, 20, 95, { maxWidth: 170 });
+    doc.text('Explanation:', 20, 115);
+    doc.text(solution.explanation, 20, 125, { maxWidth: 170 });
+    doc.text(`Time taken: ${formatTime(result.timeTaken)}`, 20, 150);
+    doc.text('Confidential — For official use only', 105, 280, { align: 'center' });
+    doc.save('case-report.pdf');
+  });
+}
+
+export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
+  const { t } = useTranslation();
+  const { playSuccess, playFail, playClick } = useSounds();
+  const { correct, solution, accusation } = result;
 
   useEffect(() => {
-    if (hasPlayed.current) return
-    hasPlayed.current = true
-    if (isCorrect) playSuccess()
-    else playFail()
-  }, [isCorrect, playSuccess, playFail])
-
-  const killer = selectedCase?.characters.find(c => c.id === selectedCase?.killerId)
-  const accused = selectedCase?.characters.find(c => c.id === accusedCharacterId)
-  const allClues = selectedCase?.rooms.flatMap(r => r.clues) ?? []
-  const allRooms = selectedCase?.rooms ?? []
-  const timeline = selectedCase?.timeline ?? []
-
-  const unexaminedClues = allClues.filter(c => !examinedClues.includes(c.id))
+    if (correct) {
+      playSuccess();
+    } else {
+      playFail();
+    }
+  }, [correct]);
 
   return (
-    <motion.div
-      dir={dir}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen flex items-center justify-center p-4 md:p-6 overflow-y-auto"
-      style={{
-        background: isCorrect
-          ? 'linear-gradient(135deg, #0a1a0a, #0d0f0e)'
-          : 'linear-gradient(135deg, #1a0a0a, #0d0f0e)',
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.5, opacity: 0, rotate: -5 }}
-        animate={{ scale: 1, opacity: 1, rotate: 0 }}
-        transition={{ type: 'spring', stiffness: 150, damping: 15 }}
-        className="paper p-5 md:p-8 max-w-2xl w-full relative"
-        style={{
-          boxShadow: isCorrect
-            ? '0 0 40px rgba(26,58,42,0.4), var(--shadow-lg)'
-            : '0 0 40px rgba(107,32,32,0.4), var(--shadow-lg)',
-        }}
-      >
-        <div
-          className="stamp text-center mb-5"
-          style={{
-            fontSize: '2rem',
-            transform: 'rotate(-15deg)',
-            color: isCorrect ? 'var(--green)' : 'var(--red)',
-            borderColor: isCorrect ? 'var(--green)' : 'var(--red)',
-            opacity: 0.85,
-          }}
-        >
-          {isCorrect ? t('case_closed') : t('case_open')}
-        </div>
-
-        <div className="mb-5">
-          <p className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
-            {t('killer_identified')}
-          </p>
-          <p className={`${locale === 'ar' ? 'arabic' : 'serif'} text-2xl font-bold`} style={{ color: 'var(--ink)' }}>
-            {locale === 'en' ? killer?.name : killer?.nameAr}
-          </p>
-          {!isCorrect && accused && (
-            <p className="hand mt-1" style={{ color: 'var(--red)' }}>
-              You accused: {locale === 'en' ? accused.name : accused.nameAr}
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 page-enter">
+      <div className="vintage-card p-8 w-full max-w-2xl space-y-6">
+        <div className="text-center space-y-4">
+          <span className={`${correct ? 'stamp-green' : 'stamp-red'} stamp-appear inline-block`}>
+            {correct ? '✓' : '✗'}
+          </span>
+          <h1 className="font-cinzel text-2xl md:text-3xl text-text-primary">
+            {correct ? t('case_solved') : t('wrong_accusation')}
+          </h1>
+          {correct && (
+            <p className="font-amiri text-stamp-green text-lg">{accusation.suspectId}</p>
+          )}
+          {!correct && (
+            <p className="font-amiri text-accent-red-bright text-lg">
+              {t('real_culprit')}: {solution.culpritId}
             </p>
           )}
         </div>
 
-        <hr className="mb-4 opacity-30" style={{ borderColor: 'var(--ink3)' }} />
+        <div className="vintage-divider" />
 
-        <div className="mb-5">
-          <p className="stamped text-xs mb-2" style={{ color: 'var(--ink3)' }}>
-            {t('solution_label')}
-          </p>
-          <p className={`${locale === 'ar' ? 'arabic' : 'serif'} text-sm leading-relaxed whitespace-pre-line`} style={{ color: 'var(--ink)' }}>
-            {locale === 'en' ? selectedCase?.solution : selectedCase?.solutionAr}
-          </p>
+        <div className="font-amiri text-text-secondary space-y-2">
+          <div className="vintage-card p-4">
+            <p className="text-text-faded text-sm font-cinzel">{t('timeline')}</p>
+            <p className="text-text-primary leading-relaxed mt-1">{solution.timeline}</p>
+          </div>
+          <div className="vintage-card p-4">
+            <p className="text-text-faded text-sm font-cinzel">{t('explanation')}</p>
+            <p className="text-text-primary leading-relaxed mt-1">{solution.explanation}</p>
+          </div>
+          <div className="vintage-card p-4">
+            <p className="text-text-faded text-sm font-cinzel">{t('time_taken')}</p>
+            <p className="text-text-primary mt-1">{formatTime(result.timeTaken)}</p>
+          </div>
         </div>
 
-        {timeline.length > 0 && (
-          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4 }}>
-            <p className="stamped text-xs mb-2" style={{ color: 'var(--ink3)' }}>
-              {t('timeline_label')}
-            </p>
-            <div className="space-y-2">
-              {timeline.map(ev => (
-                <div key={ev.id} className="flex gap-2 text-xs" style={{ flexDirection: locale === 'ar' ? 'row-reverse' : 'row' }}>
-                  <span className="stamped flex-shrink-0" style={{ color: 'var(--blue)', minWidth: 70 }}>
-                    {locale === 'en' ? ev.time : ev.timeAr}
-                  </span>
-                  <span className="serif" style={{ color: 'var(--ink)' }}>
-                    {locale === 'en' ? ev.description : ev.descriptionAr}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="vintage-divider" />
 
-        {connections.length > 0 && (
-          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4 }}>
-            <p className="stamped text-xs mb-1" style={{ color: 'var(--ink3)' }}>
-              {t('connections_made')} ({connections.length})
-            </p>
-            {connections.map((c, idx) => {
-              const item = allClues.find(cl => cl.id === c.clueId)
-              const ch = selectedCase?.characters.find(ch => ch.id === c.characterId)
-              return (
-                <div key={idx} className="mono text-xs" style={{ color: 'var(--ink)' }}>
-                  {item ? (locale === 'en' ? item.name : item.nameAr) : c.clueId} → {ch ? (locale === 'en' ? ch.name : ch.nameAr) : c.characterId}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {unexaminedClues.length > 0 && (
-          <div className="paper-dark p-3 mb-4" style={{ borderRadius: 4, opacity: 0.7 }}>
-            <p className="stamped text-xs mb-1" style={{ color: 'var(--red)' }}>
-              {t('missed_evidence')} ({unexaminedClues.length})
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {unexaminedClues.map(cl => (
-                <span key={cl.id} className="mono text-xs" style={{ color: 'var(--ink3)' }}>
-                  {locale === 'en' ? cl.name : cl.nameAr}{' '}
-                  <span style={{ color: 'var(--ink4)' }}>({allRooms.find(r => r.clues.some(c => c.id === cl.id)) ? locale === 'en' ? allRooms.find(r => r.clues.some(c => c.id === cl.id))!.name : allRooms.find(r => r.clues.some(c => c.id === cl.id))!.nameAr : ''})</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
           <button
-            onClick={() => { stopAmbient(); setFlowState('LANDING') }}
-            className="stamp stamp-red flex-1 min-h-[44px] text-center cursor-pointer hover:opacity-100 transition-opacity"
-            style={{ background: 'transparent' }}
+            onClick={() => generatePdf(result, '')}
+            className="vintage-card gold-glow cursor-pointer px-8 py-3 font-cinzel text-sm text-text-primary hover:text-border-accent transition-colors text-center"
           >
-            {t('return_menu')}
+            {t('download_report')}
           </button>
           <button
-            onClick={() => setFlowState('CASE_SELECT')}
-            className="stamp stamp-blue flex-1 min-h-[44px] text-center cursor-pointer hover:opacity-100 transition-opacity"
-            style={{ background: 'transparent' }}
+            onClick={() => { playClick(); onNewGame(); }}
+            className="vintage-card gold-glow cursor-pointer px-8 py-3 font-cinzel text-sm text-text-primary hover:text-border-accent transition-colors text-center"
           >
-            {t('play_again')}
+            {t('new_case')}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
-  )
+      </div>
+    </div>
+  );
 }
