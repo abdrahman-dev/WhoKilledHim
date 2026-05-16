@@ -1,4 +1,3 @@
-````markdown
 # CASE FORMAT — دليل إنشاء القضايا
 
 هذا الملف مرجع لإنشاء قضايا جديدة يدوياً أو عبر الذكاء الاصطناعي.
@@ -25,7 +24,6 @@ export const myCaseName: BilingualCase = {
   },
 };
 ```
-````
 
 ---
 
@@ -35,10 +33,13 @@ export const myCaseName: BilingualCase = {
 {
   id: 'case-XXX',           // فريد — لا يتكرر أبداً — نفس الـ id في الاتنين
   title: '...',             // اسم القضية
-  description: '...',       // ملخص في جملتين بحد أقصى
+  description: '...',       // ملصف في جملتين بحد أقصى
   difficulty: 'easy',       // tutorial | easy | medium | hard
   language: 'ar',           // ar في النسخة العربية — en في الإنجليزية
   timeLimit: 1800,          // بالثواني — اختياري — نفس القيمة في الاتنين
+
+  introText?: '...',        // نص سينمائي أو سردي يظهر قبل اختيار الدور
+  endingText?: '...',       // نص سردي يظهر بعد عرض النتيجة
 
   characters: [...],
   locations: [...],
@@ -58,6 +59,10 @@ export const myCaseName: BilingualCase = {
   name: 'الاسم الكامل',
   role: 'victim',
   description: 'وصف مختصر — مهنته، مكانته',
+  stats: {
+    trustLevel: 50,        // -100 إلى 100 — السلبي يعني غير جدير بالثقة
+    stressLevel: 30,       // 0 إلى 100 — المرتفع يعني متوتر
+  },
 }
 
 // مشتبه بيهم — 3 على الأقل
@@ -66,13 +71,18 @@ export const myCaseName: BilingualCase = {
   name: 'الاسم الكامل',
   role: 'suspect',
   description: 'وصف مختصر',
+  stats: {
+    trustLevel: -20,       // سلبي = غير جدير بالثقة
+    stressLevel: 70,       // مرتفع = متوتر
+  },
   alibi: 'ادعاؤه بمكانه وقت الجريمة — لازم يكون قابل للتشكيك',
+  policeRecord?: 'سجل الشرطة — معلومات سرية يراها المحلل فقط',
   questions: [
     {
       id: 'suspect-id-q1',
       question: 'سؤال الاستجواب',
       answer: 'إجابة الشخص',
-      isDeceptive: false, // true لو الإجابة كذب أو مضللة
+      isDeceptive: false,   // true لو الإجابة كذب أو مضللة — لا تظهر للمحقق أبداً
     },
     // 3 أسئلة على الأقل لكل مشتبه به
     // المجرم لازم يكون له سؤالين isDeceptive: true على الأقل
@@ -85,15 +95,26 @@ export const myCaseName: BilingualCase = {
   name: 'الاسم الكامل',
   role: 'witness',
   description: 'وصف مختصر',
+  stats: {
+    trustLevel: 60,
+    stressLevel: 20,
+  },
 }
 ```
 
-**قواعد:**
+### قواعد `stats`
 
-- كل `id` فريد وبدون مسافات — نفس الـ id في النسختين العربية والإنجليزية
+- `trustLevel`: -100 إلى 100. موجب = يبدو صادقاً. سالب = يبدو كاذباً أو مراوغاً.
+- `stressLevel`: 0 إلى 100. كلما ارتفع، كلما بدا متوتراً أو قلقاً.
+- تظهر هاتان القيمتان بشكل أشرطة مرئية في نافذة الاستجواب للمحقق.
+
+### قواعد الشخصيات
+
+- كل `id` فريد وبدون مسافات — نفس الـ id في النسختين
 - الـ `alibi` لازم يكون غامض — مش proof ومش كذبة واضحة
 - المجرم لازم يكون له `alibi` قابل للكسر بالأدلة
-- `isDeceptive` مش بيتعرض للمحقق — هو بس للمحلل في كتالوجه
+- `isDeceptive` لا يظهر للمحقق — هو فقط للمحلل أو للنتيجة النهائية
+- `policeRecord` يظهر للمحلل فقط في كتالوجه — لا يطلع عليه المحقق
 
 ---
 
@@ -221,7 +242,7 @@ export const myCaseName: BilingualCase = {
 
 - كل `cipher` في الأدلة لازم يقابله `cipherKey` في الكتالوج
 - كل `keyword` في الأدلة لازم يقابله `keywordEntry` — الكلمة لازم تتطابق تماماً
-- `victimProfile` لازم يكون فيه معلومات تساعد المحلل يجاوب أسئلة المحقق
+- `victimProfile` إلزامي — لازم يكون فيه معلومات تساعد المحلل يجاوب أسئلة المحقق
 - `secrets` لازم يربط مباشرة بدافع الجريمة
 
 ---
@@ -230,23 +251,56 @@ export const myCaseName: BilingualCase = {
 
 ```typescript
 {
-  culpritId: 'suspect-id',
+  culpritId: 'suspect-id',              // المشتبه به المجرم
+  motive: 'revenge',                    // إلزامي — الدافع (انظر الأنواع أدناه)
+
   requiredKeywords: [
     'اسم المجرم',
     'اسم دليل رئيسي',
     'كلمة مفتاحية من القضية',
   ],
-  timeline: 'السياق الزمني الكامل — بيتعرض بعد انتهاء القضية فقط',
-  explanation: 'الشرح الكامل للدوافع والأحداث — بيتعرض بعد انتهاء القضية فقط',
+
+  timeline: [                           // مصفوفة أحداث — نص عادي
+    { time: 'الساعة 7:00 مساءً', event: 'شوهد المجرم يدخل المنزل' },
+    { time: 'الساعة 7:30 مساءً', event: 'سمع صوت مشاجرة' },
+    { time: 'الساعة 8:00 مساءً', event: 'غادر المجرم مسرعاً' },
+  ],
+
+  explanation: 'الشرح الكامل للدوافع والأحداث — يعرض بعد انتهاء القضية',
 }
 ```
 
-**قواعد `requiredKeywords`:**
+### أنواع الدوافع
+
+```typescript
+motive:
+  | 'revenge'     // انتقام
+  | 'money'       // المال
+  | 'fear'        // خوف
+  | 'blackmail'   // ابتزاز
+  | 'power'       // سلطة
+  | 'jealousy'    // غيرة
+  | 'ideology'    // أيديولوجيا
+  | 'accident'    // حادث
+  | 'frustration' // إحباط
+  | 'insanity'    // جنون
+  | 'envy'        // حسد
+```
+
+### قواعد `requiredKeywords`
 
 - 3 كلمات بحد أدنى
 - لازم تكون موجودة في الأدلة أو أسماء الشخصيات
 - الـ matching بيدور على `includes` — مش exact match
 - نفس الـ keywords في النسختين العربية والإنجليزية لازم تتطابق مع لغة القضية
+
+### قواعد `timeline`
+
+- مصفوفة من `{ time: string, event: string }` وليس نصاً واحداً
+- `time` يظهر بلون ذهبي في واجهة النتيجة
+- `event` يظهر كنص عادي
+- ترتيب الأحداث من الأقدم إلى الأحدث
+- 3 أحداث على الأقل
 
 ---
 
@@ -265,7 +319,7 @@ export const myCaseName: BilingualCase = {
 
 ## Prompt جاهز للذكاء الاصطناعي
 
-انسخ الـ prompt ده كاملاً وابعته لأي نموذج ذكاء صناعي:
+انسخ الـ prompt التالي كاملاً وابعته لأي نموذج ذكاء صناعي:
 
 ```
 أنشئ قضية جديدة للعبة "المحقق والمحلل" بصيغة TypeScript.
@@ -292,6 +346,17 @@ export const caseName: BilingualCase = {
   en: { ... },
 };
 
+ملاحظات على الحقول الجديدة:
+- introText?: نص سينمائي اختياري يظهر قبل بدء القضية
+- endingText?: نص سردي اختياري يظهر بعد انتهاء القضية
+- stats: مطلوب لكل شخصية — trustLevel (-100 إلى 100) و stressLevel (0 إلى 100)
+- policeRecord?: سجل شرطة اختياري — يظهر للمحلل فقط
+- solution.timeline: مصفوفة من { time, event } — ليس نصاً واحداً
+- solution.motive: مطلوب — اختر من القائمة أدناه
+
+أنواع الدوافع:
+revenge | money | fear | blackmail | power | jealousy | ideology | accident | frustration | insanity | envy
+
 القواعد الصارمة:
 1. visibleToInvestigator لا يحتوي أبداً على تفسير الشفرة أو معنى الكلمة المفتاحية
 2. analystKey و decoded و analystExplanation للمحلل فقط — لا تضعها في visibleToInvestigator
@@ -304,6 +369,9 @@ export const caseName: BilingualCase = {
 9. victimProfile لازم يكون مفصلاً ويربط secrets بدافع الجريمة مباشرة
 10. الوصف حسي وتفصيلي — مش مجرد "غرفة كبيرة"
 11. النسخة الإنجليزية ترجمة كاملة للعربية — نفس القصة ونفس الأدلة
+12. stats موجود لكل شخصية — trustLevel يعكس مدى مصداقيته، stressLevel يعكس توتره
+13. timeline مصفوفة — كل عنصر له time (الوقت) و event (الحدث)
+14. motive إلزامي — اختر من أنواع الدوافع المذكورة
 ```
 
 ---
@@ -314,4 +382,8 @@ export const caseName: BilingualCase = {
 - الـ `id` لكل عنصر فريد عبر القضية كاملة — لا تكرار
 - الأدلة المزيفة `isKeyEvidence: false` موجودة عشان تشتت
 - كل قضية ملف مستقل — لا imports بين القضايا
-- بعد إنشاء القضية أضفها في `CasesPage.tsx` في array الـ `allCases`
+- بعد إنشاء القضية أضفها في `cases/index.ts` في مصفوفة `availableCases`
+- `stats` موجود لكل الشخصيات (victim/suspect/witness) وتعطي المحقق انطباعاً بصرياً أثناء الاستجواب
+- `policeRecord` سري للمحلل فقط — لا يظهر للمحقق في واجهته
+- `timeline` يعرض بعد انتهاء القضية — الوقت بالذهب والحدث بالنص العادي
+- `motive` يظهر كشارة بعد اسم المجرم في شاشة النتيجة

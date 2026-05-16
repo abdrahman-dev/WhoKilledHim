@@ -5,12 +5,13 @@ import CipherCatalog from '../components/analyst/CipherCatalog';
 import KeywordCatalog from '../components/analyst/KeywordCatalog';
 import AnalystNotes from '../components/analyst/AnalystNotes';
 import VictimProfilePanel from '../components/analyst/VictimProfilePanel';
+import DeductionPanel from '../components/analyst/DeductionPanel';
 import AnalystSearch from '../components/analyst/AnalystSearch';
 import LanguageToggle from '../components/shared/LanguageToggle';
 import MuteToggle from '../components/shared/MuteToggle';
 import { useSounds } from '../sounds/useSounds';
 
-type Tab = 'ciphers' | 'keywords' | 'notes' | 'victim';
+type Tab = 'ciphers' | 'keywords' | 'notes' | 'victim' | 'deduction';
 
 interface AnalystPageProps {
   onExit: () => void;
@@ -31,6 +32,7 @@ export default function AnalystPage({ onExit }: AnalystPageProps) {
     { id: 'keywords', label: t('keyword_catalog') },
     { id: 'notes', label: t('my_notes') },
     { id: 'victim', label: t('victim_profile') },
+    { id: 'deduction', label: t('deduction_panel') },
   ];
 
   return (
@@ -61,12 +63,12 @@ export default function AnalystPage({ onExit }: AnalystPageProps) {
         />
       </div>
 
-      <div className="flex border-b border-border-main/30 mb-6 overflow-x-auto">
+      <div className="flex border-b border-border-main/30 mb-6 overflow-x-auto scrollbar-none whitespace-nowrap">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => { playClick(); setActiveTab(tab.id); }}
-            className={`font-cinzel text-sm px-4 py-3 transition-colors cursor-pointer border-b-2 -mb-[1px] shrink-0 ${
+            className={`font-cinzel text-[0.7rem] md:text-sm px-3 md:px-4 py-3 transition-colors cursor-pointer border-b-2 -mb-[1px] shrink-0 min-h-[44px] ${
               activeTab === tab.id
                 ? 'text-border-accent border-border-accent'
                 : 'text-text-faded border-transparent hover:text-text-secondary'
@@ -86,6 +88,7 @@ export default function AnalystPage({ onExit }: AnalystPageProps) {
         {activeTab === 'victim' && (
           <VictimProfilePanel profile={analystCatalog.victimProfile} />
         )}
+        {activeTab === 'deduction' && <DeductionPanel />}
       </div>
     </div>
   );

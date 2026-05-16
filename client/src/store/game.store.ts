@@ -5,6 +5,7 @@ import type {
   GamePhase,
   GameResult,
   GameRole,
+  DeductionFlags,
 } from '../types/case.types';
 
 type GameState = {
@@ -13,6 +14,7 @@ type GameState = {
   phase: GamePhase;
   currentLocationId: string | null;
   discoveredEvidenceIds: string[];
+  deductionFlags: DeductionFlags[];
   startTime: number | null;
   result: GameResult | null;
 };
@@ -21,6 +23,7 @@ type GameActions = {
   initGame: (gameCase: Case, role: GameRole) => void;
   setLocation: (locationId: string) => void;
   discoverEvidence: (evidenceId: string) => void;
+  setDeductionFlag: (flag: DeductionFlags) => void;
   accuse: (accusation: Accusation) => void;
   reset: () => void;
 };
@@ -31,6 +34,7 @@ const initialState: GameState = {
   phase: 'role-select',
   currentLocationId: null,
   discoveredEvidenceIds: [],
+  deductionFlags: [],
   startTime: null,
   result: null,
 };
@@ -58,19 +62,34 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     set({ discoveredEvidenceIds: [...discoveredEvidenceIds, evidenceId] });
   },
 
+  setDeductionFlag: (flag) => {
+    const { deductionFlags } = get();
+    const existing = deductionFlags.findIndex(
+      (f) => f.suspectId === flag.suspectId
+    );
+    if (existing === -1) {
+      set({ deductionFlags: [...deductionFlags, flag] });
+    } else {
+      const updated = [...deductionFlags];
+      updated[existing] = { ...updated[existing], ...flag };
+      set({ deductionFlags: updated });
+    }
+  },
+
   accuse: (accusation) => {
     const { caseData, startTime } = get();
     if (!caseData) return;
 
     const { solution } = caseData;
 
-    // matching بسيط — بندور على requiredKeywords في النص
     const culpritCorrect = accusation.suspectId === solution.culpritId;
     const summaryLower = accusation.evidenceSummary.toLowerCase();
     const keywordsMatched = solution.requiredKeywords.filter((kw) =>
       summaryLower.includes(kw.toLowerCase())
     );
-    const correct = culpritCorrect && keywordsMatched.length >= Math.ceil(solution.requiredKeywords.length / 2);
+    const correct =
+      culpritCorrect &&
+      keywordsMatched.length >= Math.ceil(solution.requiredKeywords.length / 2);
 
     set({
       phase: 'result',

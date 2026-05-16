@@ -33,7 +33,7 @@ export default function CharacterCard({ character }: CharacterCardProps) {
         {character.role !== 'victim' && (
           <button
             onClick={() => { playClick(); playPaper(); setShowModal(true); }}
-            className="vintage-card gold-glow cursor-pointer px-3 py-1.5 text-xs font-cinzel text-text-secondary hover:text-border-accent transition-colors"
+            className="vintage-card gold-glow cursor-pointer px-3 py-1.5 text-xs font-cinzel text-text-secondary hover:text-border-accent transition-colors min-h-[44px]"
           >
             {t('interrogate')}
           </button>
@@ -46,34 +46,75 @@ export default function CharacterCard({ character }: CharacterCardProps) {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="vintage-card p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto space-y-4"
+            className="vintage-card w-full max-w-lg mx-4 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between">
-              <h3 className="font-cinzel text-text-primary">{character.name}</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-text-faded hover:text-text-secondary text-xl leading-none cursor-pointer"
-              >
-                &times;
-              </button>
+            {/* Header — ثابت */}
+            <div className="p-4 md:p-6 pb-4 shrink-0">
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="font-cinzel text-text-primary">{character.name}</h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-text-faded hover:text-text-secondary text-xl leading-none cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Alibi */}
+              {character.alibi && (
+                <div className="vintage-card bg-bg-paper/50 p-3 mb-3">
+                  <p className="font-cinzel text-xs text-text-faded mb-1">{t('alibi')}</p>
+                  <p className="font-amiri text-text-secondary text-sm leading-relaxed">
+                    {character.alibi}
+                  </p>
+                </div>
+              )}
+
+              {/* Stats */}
+              {character.stats && (
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between font-cinzel text-xs text-text-faded mb-1">
+                      <span>{t('trust_level')}</span>
+                      <span>{character.stats.trustLevel}</span>
+                    </div>
+                    <div className="h-[6px] bg-gray-900/60">
+                      <div
+                        className="h-full transition-all"
+                        style={{
+                          width: `${Math.abs(character.stats.trustLevel)}%`,
+                          backgroundColor: character.stats.trustLevel >= 0 ? '#4ade80' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between font-cinzel text-xs text-text-faded mb-1">
+                      <span>{t('stress_level')}</span>
+                      <span>{character.stats.stressLevel}</span>
+                    </div>
+                    <div className="h-[6px] bg-gray-900/60">
+                      <div
+                        className="h-full transition-all"
+                        style={{
+                          width: `${character.stats.stressLevel}%`,
+                          backgroundColor: '#f59e0b',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {character.alibi && (
-              <div className="vintage-card bg-bg-paper/50 p-4">
-                <p className="font-cinzel text-xs text-text-faded mb-1">{t('alibi')}</p>
-                <p className="font-amiri text-text-secondary text-sm leading-relaxed">
-                  {character.alibi}
-                </p>
-              </div>
-            )}
-
+            {/* Questions — scrollable منفصل */}
             {character.questions && character.questions.length > 0 && (
-              <div className="space-y-2">
-                <p className="font-cinzel text-xs text-text-faded mb-2">
-                  {t('interrogate')}
+              <div className="flex flex-col min-h-0 border-t border-border-main/30">
+                <p className="font-cinzel text-xs text-text-faded px-6 py-3 shrink-0">
+                  — {t('interrogate')} —
                 </p>
-                <div className="max-h-[40vh] overflow-y-auto space-y-2 pe-1">
+                <div className="overflow-y-auto px-6 pb-6 space-y-2">
                   {character.questions.map((q) => (
                     <div key={q.id} className="vintage-card p-3 space-y-2">
                       <button

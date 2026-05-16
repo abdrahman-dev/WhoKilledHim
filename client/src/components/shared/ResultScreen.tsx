@@ -6,6 +6,7 @@ import { useSounds } from '../../sounds/useSounds';
 interface ResultScreenProps {
   result: GameResult;
   onNewGame: () => void;
+  endingText?: string;
 }
 
 function formatTime(ms: number): string {
@@ -29,7 +30,7 @@ function generatePdf(result: GameResult, title: string) {
     doc.text(`Evidence: ${accusation.evidenceSummary}`, 20, 55);
     doc.text(`Result: ${correct ? 'CORRECT' : 'WRONG'}`, 20, 70);
     doc.text('Timeline:', 20, 85);
-    doc.text(solution.timeline, 20, 95, { maxWidth: 170 });
+    doc.text(solution.timeline.map(e => `${e.time} - ${e.event}`).join('\n'), 20, 95, { maxWidth: 170 });
     doc.text('Explanation:', 20, 115);
     doc.text(solution.explanation, 20, 125, { maxWidth: 170 });
     doc.text(`Time taken: ${formatTime(result.timeTaken)}`, 20, 150);
@@ -38,7 +39,7 @@ function generatePdf(result: GameResult, title: string) {
   });
 }
 
-export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
+export default function ResultScreen({ result, onNewGame, endingText }: ResultScreenProps) {
   const { t } = useTranslation();
   const { playSuccess, playFail, playClick } = useSounds();
   const { correct, solution, accusation } = result;
@@ -53,7 +54,7 @@ export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 page-enter">
-      <div className="vintage-card p-8 w-full max-w-2xl space-y-6">
+      <div className="vintage-card p-4 md:p-8 w-full max-w-2xl space-y-6">
         <div className="text-center space-y-4">
           <span className={`${correct ? 'stamp-green' : 'stamp-red'} stamp-appear inline-block`}>
             {correct ? '✓' : '✗'}
@@ -62,12 +63,22 @@ export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
             {correct ? t('case_solved') : t('wrong_accusation')}
           </h1>
           {correct && (
-            <p className="font-amiri text-stamp-green text-lg">{accusation.suspectId}</p>
+            <div>
+              <p className="font-amiri text-stamp-green text-lg">{accusation.suspectId}</p>
+              <p className="font-cinzel text-xs text-accent-gold mt-1">
+                {t('motive')}: {t(`motive_${solution.motive}`)}
+              </p>
+            </div>
           )}
           {!correct && (
-            <p className="font-amiri text-accent-red-bright text-lg">
-              {t('real_culprit')}: {solution.culpritId}
-            </p>
+            <div>
+              <p className="font-amiri text-accent-red-bright text-lg">
+                {t('real_culprit')}: {solution.culpritId}
+              </p>
+              <p className="font-cinzel text-xs text-accent-gold mt-1">
+                {t('motive')}: {t(`motive_${solution.motive}`)}
+              </p>
+            </div>
           )}
         </div>
 
@@ -76,7 +87,14 @@ export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
         <div className="font-amiri text-text-secondary space-y-2">
           <div className="vintage-card p-4">
             <p className="text-text-faded text-sm font-cinzel">{t('timeline')}</p>
-            <p className="text-text-primary leading-relaxed mt-1">{solution.timeline}</p>
+            <div className="space-y-2 mt-1">
+              {solution.timeline.map((e, i) => (
+                <div key={i} className="flex gap-2">
+                  <span className="text-accent-gold font-cinzel text-sm shrink-0">{e.time}</span>
+                  <span className="text-text-primary">{e.event}</span>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="vintage-card p-4">
             <p className="text-text-faded text-sm font-cinzel">{t('explanation')}</p>
@@ -86,6 +104,13 @@ export default function ResultScreen({ result, onNewGame }: ResultScreenProps) {
             <p className="text-text-faded text-sm font-cinzel">{t('time_taken')}</p>
             <p className="text-text-primary mt-1">{formatTime(result.timeTaken)}</p>
           </div>
+          {endingText && (
+            <div className="border-t border-border-main/30 pt-4 mt-4 text-center">
+              <p className="font-amiri italic text-text-secondary leading-relaxed text-sm">
+                {endingText}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="vintage-divider" />

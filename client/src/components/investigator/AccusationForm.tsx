@@ -67,7 +67,7 @@ export default function AccusationForm({ suspects, onSubmit, onBack }: Accusatio
               value={evidenceSummary}
               onChange={(e) => setEvidenceSummary(e.target.value)}
               placeholder={t('evidence_placeholder')}
-              className="w-full vintage-card bg-bg-card text-text-primary font-amiri p-3 min-h-[180px] resize-y"
+              className="w-full vintage-card bg-bg-card text-text-primary font-amiri p-3 min-h-[120px] md:min-h-[180px] resize-y"
               dir="auto"
             />
           </div>

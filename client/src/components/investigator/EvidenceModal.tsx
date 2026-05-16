@@ -28,7 +28,7 @@ export default function EvidenceModal({ evidence, onClose }: EvidenceModalProps)
       onClick={() => { playClick(); onClose(); }}
     >
       <div
-        className="vintage-card p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto space-y-4"
+        className="vintage-card p-4 md:p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">

@@ -2,16 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 import { useGameStore } from './store/game.store';
-import { trainingCase } from './cases/training-case';
-import type { Case } from './types/case.types';
+import { availableCases } from './cases';
 import CasesPage from './pages/CasesPage';
 import RoleSelectPage from './pages/RoleSelectPage';
 import InvestigatorPage from './pages/InvestigatorPage';
 import AnalystPage from './pages/AnalystPage';
 import AccusationForm from './components/investigator/AccusationForm';
 import ResultScreen from './components/shared/ResultScreen';
-
-const availableCases: Case[] = [trainingCase];
+import type { Case } from './types/case.types';
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -52,7 +50,7 @@ export default function App() {
   };
 
   if (phase === 'result') {
-    return <ResultScreen result={result!} onNewGame={handleExit} />;
+    return <ResultScreen result={result!} onNewGame={handleExit} endingText={caseData?.endingText} />;
   }
 
   if (phase === 'accusation' && caseData) {
@@ -93,5 +91,5 @@ export default function App() {
     }
   }
 
-  return <CasesPage onSelectCase={handleSelectCase} />;
+  return <CasesPage cases={availableCases} onSelectCase={handleSelectCase} />;
 }

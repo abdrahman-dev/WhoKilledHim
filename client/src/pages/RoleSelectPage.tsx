@@ -43,6 +43,14 @@ export default function RoleSelectPage({ selectedCase, onBack }: RoleSelectPageP
           </p>
         </div>
 
+            {selectedCase.introText && (
+          <div className="vintage-card p-4 border-s-2 border-accent-gold/30">
+            <p className="font-amiri italic text-text-faded text-sm leading-relaxed">
+              &ldquo;{selectedCase.introText}&rdquo;
+            </p>
+          </div>
+        )}
+
         <RoleSelect onSelect={handleSelect} />
       </div>
     </div>

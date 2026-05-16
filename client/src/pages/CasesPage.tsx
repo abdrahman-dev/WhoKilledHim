@@ -2,13 +2,12 @@ import { useTranslation } from 'react-i18next';
 import LanguageToggle from '../components/shared/LanguageToggle';
 import MuteToggle from '../components/shared/MuteToggle';
 import { useSounds } from '../sounds/useSounds';
-import { trainingCase } from '../cases/training-case';
+import type { Case } from '../types/case.types';
 
 interface CasesPageProps {
+  cases: Case[];
   onSelectCase: (caseId: string) => void;
 }
-
-const cases = [trainingCase];
 
 const difficultyColors: Record<string, string> = {
   tutorial: 'text-border-accent border-border-accent',
@@ -17,7 +16,7 @@ const difficultyColors: Record<string, string> = {
   hard: 'text-accent-red-bright border-accent-red-bright',
 };
 
-export default function CasesPage({ onSelectCase }: CasesPageProps) {
+export default function CasesPage({ cases, onSelectCase }: CasesPageProps) {
   const { t } = useTranslation();
   const { playClick } = useSounds();
 
